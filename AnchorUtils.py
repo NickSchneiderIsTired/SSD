@@ -27,7 +27,7 @@ def draw_rect(anchor_grid, label_grid, img, out):
 
 def draw_nms(bestBoxes, bestScores, image):
     for (box, score) in zip(bestBoxes, bestScores):
-        if score > 0.5:
+        if score > 0.01:
             image.rectangle(xy=box.tolist(), outline=128, width=2)
     return image
 

@@ -57,3 +57,37 @@ class MMP_Dataset:
         img = normalize(img)
         img = tf.image.pad_to_bounding_box(img, 0, 0, 320, 320)
         return filename, img, boxes, scores
+
+'''
+    TEST DATASET:
+'''
+
+
+def create_test_dict(path):
+    return [path + file for file in listdir(path)]
+
+
+class MMP_Dataset_Test:
+    def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid, threshhold):
+        self.path_to_data = path_to_data
+        self.batch_size = batch_size
+        self.num_parallel_calls = num_parallel_calls
+        self.files = create_test_dict(path_to_data)
+        self.anchor_grid = anchor_grid
+        self.threshhold = threshhold
+
+    def data_gen(self):
+        for filename in self.files:
+            yield filename
+
+    def __call__(self):
+        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=tf.string)
+        dataset = dataset.map(self.load_single_example, num_parallel_calls=self.num_parallel_calls)
+        dataset = dataset.batch(self.batch_size)
+        return dataset
+
+    def load_single_example(self, filename):
+        img = tf.cast(tf.io.decode_png(tf.io.read_file(filename)), tf.float32)
+        img = normalize(img)
+        img = tf.image.pad_to_bounding_box(img, 0, 0, 320, 320)
+        return filename, img

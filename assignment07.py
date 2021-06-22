@@ -1,9 +1,10 @@
 from tensorflow.keras.applications import MobileNetV2
 import tensorflow as tf
-from AnchorUtils import anchor_grid, create_label_grid, draw_rect
+from AnchorUtils import anchor_grid
 from DatasetMMP import MMP_Dataset
 import numpy as np
 from Evaluation import evaluate_net
+import os
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -12,12 +13,14 @@ if len(physical_devices) > 0:
 
 
 def main():
+    if os.path.exists("detections.txt"):
+        os.remove("detections.txt")
     # Define necessary components
     batch_size = 16
     grid = anchor_grid(10, 10, 32.0, [70, 100, 140, 200], [0.5, 1.0, 2.0])
     dataset = MMP_Dataset("dataset_mmp/train/",
                           batch_size=batch_size,
-                          num_parallel_calls=4,
+                          num_parallel_calls=6,
                           anchor_grid=grid,
                           threshhold=0.5)
     net = MobileNetV2(input_shape=(320, 320, 3), weights="imagenet", include_top=False)
@@ -30,7 +33,6 @@ def main():
                                        kernel_regularizer=tf.keras.regularizers.L2(l2=0.0005),
                                        name="Own_Layer")(last_layer.output)
     net = tf.keras.models.Model(net.input, new_layer)
-    # Make mobilenet layers untrainable
 
     counter = 0
     output_shape = (batch_size, 10, 10, 4, 3)
@@ -50,31 +52,21 @@ def main():
             negative_samples = tf.clip_by_value(negative_samples, clip_value_min=-10000, clip_value_max=1)
             res = net(imgs, training=False)
             res = tf.reshape(res, (batch_size, 10, 10, 4, 3, 2))
-            #regulization = tf.add_n(net.losses)
+            # regulization = tf.add_n(net.losses)
             # logits: 10x10x4x3x2  labels: 10x10x4x3
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(label_grids, res)
             # 10 10 4 3
-
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
             # print(counter)
-            if counter % 10 == 0:
+            if counter % 100 == 0:
                 print(mean_loss.numpy())
-                evaluate_net(res, grid, imgs, counter)
-                # test_net(res, grid, imgs[0], 'output' + str(counter) + '.jpg')
-                #net.save('./models/mobilenet')
+                evaluate_net(res, grid, imgs, filenames, counter)
+                # net.save('./models/mobilenet')
 
         grads = tape.gradient(mean_loss, net.trainable_weights)
         opt.apply_gradients(zip(grads, net.trainable_weights))
         counter += 1
-
-
-def test_net(res, grid, img, out):
-    numpy_img = img.numpy().astype('float32')
-    res = res[:, :, :, :, :, 1]
-    max = tf.nn.softmax(res[0]).numpy()
-    label_grid = create_label_grid(max, 0.3)
-    draw_rect(grid, tf.reshape(label_grid, (10, 10, 4, 3)).numpy(), numpy_img, out)
 
 
 if __name__ == '__main__':
