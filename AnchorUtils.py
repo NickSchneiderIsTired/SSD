@@ -42,7 +42,7 @@ def draw_annotation_on_img(img, rectangles):
 
 
 def create_label_grid(overlap_values, threshhold):
-    return (overlap_values > threshhold).astype(int)
+    return (overlap_values > threshhold).astype(float)  # int
 
 
 def anchor_max_gt_overlaps(anchor_grid, gts=[]):

@@ -45,8 +45,8 @@ class MMP_Dataset:
             yield filename, create_label_grid(scores, self.threshhold), scores
 
     def __call__(self):
-        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.int32, tf.float32))
-        dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
+        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.float32, tf.float32))
+        #dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
         dataset = dataset.repeat()
         dataset = dataset.map(self.load_single_example, num_parallel_calls=self.num_parallel_calls)
         dataset = dataset.batch(self.batch_size)
