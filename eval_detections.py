@@ -168,7 +168,7 @@ if __name__ == '__main__':
     clsname2id = {'person': 0}
     
     print('Loading groundtruth data...')
-    img2gts = fio.load_gts(cmdargs.dset_basedir,'test')
+    img2gts = fio.load_gts(cmdargs.dset_basedir,'val')
     gts_num_images = 0
     gts_num_instances = 0
     for gts in img2gts.values():

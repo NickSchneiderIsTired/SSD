@@ -45,9 +45,9 @@ class MMP_Dataset:
             yield filename, create_label_grid(scores, self.threshhold), scores
 
     def __call__(self):
-        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.float32, tf.float32))
+        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.int32, tf.float32))
         #dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
-        dataset = dataset.repeat()
+        #dataset = dataset.repeat()
         dataset = dataset.map(self.load_single_example, num_parallel_calls=self.num_parallel_calls)
         dataset = dataset.batch(self.batch_size)
         return dataset
@@ -59,15 +59,15 @@ class MMP_Dataset:
         return filename, img, boxes, scores
 
 '''
-    TEST DATASET:
+    EVAL DATASET:
 '''
 
 
 def create_test_dict(path):
-    return [path + file for file in listdir(path)]
+    return [path + file for file in listdir(path) if file.endswith('.jpg')]
 
 
-class MMP_Dataset_Test:
+class MMP_Dataset_Evaluation:
     def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid, threshhold):
         self.path_to_data = path_to_data
         self.batch_size = batch_size

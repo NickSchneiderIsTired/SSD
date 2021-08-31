@@ -1,7 +1,10 @@
 import numpy as np
+from AnchorUtils import norm_img
 from AnnotationRect import iou, AnnotationRect
 import tensorflow as tf
 import os
+from os import listdir
+from DatasetMMP import MMP_Dataset_Evaluation
 
 
 def call_eval_script():
@@ -9,10 +12,10 @@ def call_eval_script():
 
 
 def write_detections(filenames, boxes, scores):
-    with open('detections.txt', 'w') as file:
+    with open('detections.txt', 'a') as file:
         for filename in filenames:
             for (box, score) in zip(boxes, scores):
-                fn = filename.numpy().decode('utf-8')
+                fn = filename.numpy().decode('utf-8')[-12:]
                 file.write(fn + ' 0 '
                            + ' ' + str(box[0]) + ' ' + str(box[1]) + ' ' + str(box[2]) + ' ' + str(box[3])
                            + ' ' + str(score) + '\n')
@@ -50,17 +53,32 @@ def nms(boxes, scores, threshhold):
     return D, S
 
 
-def evaluate_net(net_output, grid, imgs, filenames, count):
-    # net_output = net_output[:, :, :, :, :, 1]
-    max = tf.nn.softmax(tf.reshape(net_output[0], [-1]))
-    bestBoxes, bestScores = nms(grid, max, 0.3)
-    '''
-    img = imgs[0]
-    numpy_img = unnormalize(img.numpy()).astype('uint8')
-    eval_img = Image.fromarray(numpy_img)
-    draw_eval = ImageDraw.Draw(eval_img)
-    draw_nms(bestBoxes, bestScores, draw_eval)
-    eval_img.save(r'eval_img' + str(count) + '.jpg')
-    call_eval_script()
-    '''
-    write_detections(filenames, bestBoxes, bestScores)
+def evaluate_net(net, grid, dataset_path):
+    if os.path.exists("detections.txt"):
+        os.remove("detections.txt")
+    batch_size = 16
+    dataset = MMP_Dataset_Evaluation(dataset_path,
+                          batch_size=batch_size,
+                          num_parallel_calls=2,
+                          anchor_grid=grid,
+                          threshhold=0.9)
+    print("Starting evaluation")
+    for (filenames, imgs) in dataset():
+        net_output = net(imgs, training=False)
+        net_output = tf.reshape(net_output, (filenames.shape[0], 10, 10, 4, 3, 2))
+
+        softmax_between_person_and_background = tf.nn.softmax(net_output)
+        person_scores = softmax_between_person_and_background[:, :, :, :, :, 1]
+        box_score_tuples = [nms(grid, max, 0.3) for max in person_scores]
+        for (bestBoxes, bestScores) in box_score_tuples:
+            write_detections(filenames, bestBoxes, bestScores)
+    print("Evaluation completed")
+
+
+def list_filenames_gen(path):
+    print("Reading filenames")
+    for file in listdir(path):
+        if file.endswith('.jpg'):
+            yield path + file
+        else:
+            continue

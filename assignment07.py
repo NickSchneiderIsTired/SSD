@@ -4,7 +4,6 @@ from AnchorUtils import anchor_grid
 from DatasetMMP import MMP_Dataset
 import numpy as np
 from Evaluation import evaluate_net
-import os
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -13,21 +12,19 @@ if len(physical_devices) > 0:
 
 
 def main():
-    if os.path.exists("detections.txt"):
-        os.remove("detections.txt")
     # Define necessary components
     batch_size = 16
     grid = anchor_grid(10, 10, 32.0, [70, 100, 140, 200], [0.5, 1.0, 2.0])
     dataset = MMP_Dataset("dataset_mmp/train/",
                           batch_size=batch_size,
-                          num_parallel_calls=6,
+                          num_parallel_calls=4,
                           anchor_grid=grid,
                           threshhold=0.5)
     net = MobileNetV2(input_shape=(320, 320, 3), weights="imagenet", include_top=False)
     opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
     # Add another layer
     last_layer = net.layers[-1]
-    new_layer = tf.keras.layers.Conv2D(filters=12, # 24
+    new_layer = tf.keras.layers.Conv2D(filters=24,  # 24
                                        kernel_size=(1, 1),
                                        padding="same",
                                        kernel_regularizer=tf.keras.regularizers.L2(l2=0.0005),
@@ -36,7 +33,7 @@ def main():
 
     counter = 0
     output_shape = (batch_size, 10, 10, 4, 3)
-    negative_ratio = tf.constant(10, dtype=float)
+    negative_ratio = tf.constant(10)
 
     for (filenames, imgs, label_grids, scores) in dataset():
         with tf.GradientTape() as tape:
@@ -51,18 +48,19 @@ def main():
 
             negative_samples = tf.clip_by_value(negative_samples, clip_value_min=-10000, clip_value_max=1)
             res = net(imgs, training=False)
-            res = tf.reshape(res, (batch_size, 10, 10, 4, 3))  # ,2
+            res = tf.reshape(res, (batch_size, 10, 10, 4, 3, 2))  # ,2
             # regulization = tf.add_n(net.losses)
             # logits: 10x10x4x3x2  labels: 10x10x4x3
-            loss = tf.nn.sigmoid_cross_entropy_with_logits(label_grids, res)
+            loss = tf.nn.sparse_softmax_cross_entropy_with_logits(label_grids, res)
             # 10 10 4 3
+            np_loss = loss.numpy()
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
-            # print(counter)
-            if counter % 10 == 0:
-                print(mean_loss.numpy())
-                evaluate_net(res, grid, imgs, filenames, counter)
-                # net.save('./models/mobilenet')
+            print(mean_loss.numpy())
+        if counter == 0:
+            evaluate_net(net, grid, "dataset_mmp/val/")
+            # net.save('./models/mobilenet')
+            return
 
         grads = tape.gradient(mean_loss, net.trainable_weights)
         opt.apply_gradients(zip(grads, net.trainable_weights))
