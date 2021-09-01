@@ -3,7 +3,6 @@ import tensorflow as tf
 from AnchorUtils import anchor_grid
 from DatasetMMP import MMP_Dataset
 import numpy as np
-from Evaluation import evaluate_net
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -17,7 +16,7 @@ def main():
     grid = anchor_grid(10, 10, 32.0, [70, 100, 140, 200], [0.5, 1.0, 2.0])
     dataset = MMP_Dataset("dataset_mmp/train/",
                           batch_size=batch_size,
-                          num_parallel_calls=4,
+                          num_parallel_calls=6,
                           anchor_grid=grid,
                           threshhold=0.5)
     net = MobileNetV2(input_shape=(320, 320, 3), weights="imagenet", include_top=False)
@@ -49,17 +48,15 @@ def main():
             negative_samples = tf.clip_by_value(negative_samples, clip_value_min=-10000, clip_value_max=1)
             res = net(imgs, training=False)
             res = tf.reshape(res, (batch_size, 10, 10, 4, 3, 2))  # ,2
-            # regulization = tf.add_n(net.losses)
+            # res = res + tf.add_n(net.losses)
             # logits: 10x10x4x3x2  labels: 10x10x4x3
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(label_grids, res)
             # 10 10 4 3
-            np_loss = loss.numpy()
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
-            print(mean_loss.numpy())
-        if counter == 0:
-            evaluate_net(net, grid, "dataset_mmp/val/")
-            # net.save('./models/mobilenet')
+            print(mean_loss.numpy(), counter)
+        if counter == 500:
+            net.save('./models/mobilenet')
             return
 
         grads = tape.gradient(mean_loss, net.trainable_weights)

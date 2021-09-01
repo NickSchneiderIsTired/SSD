@@ -1,3 +1,5 @@
+import random
+from augmentation import augment
 import tensorflow as tf
 import numpy as np
 from AnnotationRect import AnnotationRect
@@ -41,21 +43,23 @@ class MMP_Dataset:
 
     def data_gen(self):
         for filename, annotationRects in self.files.items():
+            modifier = random.randint(1, 100)
             scores = anchor_max_gt_overlaps(self.anchor_grid, np.array([np.array(rect) for rect in annotationRects]))
-            yield filename, create_label_grid(scores, self.threshhold), scores
+            yield filename, create_label_grid(scores, self.threshhold), scores, modifier
 
     def __call__(self):
-        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.int32, tf.float32))
-        #dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
-        #dataset = dataset.repeat()
+        dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.int32, tf.float32, tf.int32))
+        # dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
+        dataset = dataset.repeat()
         dataset = dataset.map(self.load_single_example, num_parallel_calls=self.num_parallel_calls)
         dataset = dataset.batch(self.batch_size)
         return dataset
 
-    def load_single_example(self, filename, boxes, scores):
+    def load_single_example(self, filename, boxes, scores, modifier):
         img = tf.cast(tf.io.decode_png(tf.io.read_file(filename)), tf.float32)
         img = normalize(img)
         img = tf.image.pad_to_bounding_box(img, 0, 0, 320, 320)
+        img, boxes, scores = augment(img, boxes, scores, modifier)
         return filename, img, boxes, scores
 
 '''
