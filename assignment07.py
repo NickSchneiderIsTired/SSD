@@ -38,14 +38,19 @@ def main():
         with tf.GradientTape() as tape:
             positive_values_count = tf.math.reduce_sum(label_grids)
             negative_samples = tf.random.uniform(output_shape, minval=0, maxval=1, dtype=tf.float32)
+
+            negative_samples = tf.reshape(negative_samples, np.prod(list(output_shape)))
+            negative_samples = tf.sort(negative_samples)
             negative_sample_count = positive_values_count * negative_ratio
-            top_k = tf.math.top_k(tf.sort(tf.reshape(negative_samples, np.prod(list(output_shape)))),
-                                  k=negative_sample_count.numpy())
+
+            top_k = tf.math.top_k(negative_samples, k=negative_sample_count.numpy())
             negative_samples = negative_samples > top_k.values[-1].numpy()
             negative_samples = tf.cast(negative_samples, tf.float32)
+
+            negative_samples = tf.reshape(negative_samples, output_shape)
             negative_samples = tf.add(negative_samples, tf.cast(label_grids, tf.float32))
 
-            negative_samples = tf.clip_by_value(negative_samples, clip_value_min=-10000, clip_value_max=1)
+            negative_samples = tf.clip_by_value(negative_samples, clip_value_min=-1000000, clip_value_max=1)
             res = net(imgs, training=False)
             res = tf.reshape(res, (batch_size, 10, 10, 4, 3, 2))  # ,2
             # res = res + tf.add_n(net.losses)
