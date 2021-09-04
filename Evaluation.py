@@ -18,8 +18,8 @@ def write_detections(filename, boxes, scores):
         file.close()
 
 
-def nms(boxes, scores, threshhold):
-    return tf.image.non_max_suppression(boxes, scores, iou_threshold=threshhold, max_output_size=20)
+def nms(boxes, scores, threshold):
+    return tf.image.non_max_suppression(boxes, scores, iou_threshold=threshold, max_output_size=20)
 
 
 def evaluate_net(net, grid, dataset_path):
@@ -28,9 +28,8 @@ def evaluate_net(net, grid, dataset_path):
     batch_size = 16
     dataset = MMP_Dataset_Evaluation(dataset_path,
                           batch_size=batch_size,
-                          num_parallel_calls=2,
-                          anchor_grid=grid,
-                          threshhold=0.9)
+                          num_parallel_calls=6,
+                          anchor_grid=grid)
     flatted_grid = tf.reshape(grid, (10 * 10 * 4 * 3, 4))
 
     print("Starting evaluation")

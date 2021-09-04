@@ -72,13 +72,11 @@ def create_test_dict(path):
 
 
 class MMP_Dataset_Evaluation:
-    def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid, threshhold):
-        self.path_to_data = path_to_data
+    def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid):
         self.batch_size = batch_size
         self.num_parallel_calls = num_parallel_calls
         self.files = create_test_dict(path_to_data)
         self.anchor_grid = anchor_grid
-        self.threshhold = threshhold
 
     def data_gen(self):
         for filename in self.files:
