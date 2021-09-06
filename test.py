@@ -13,7 +13,7 @@ def main():
         os.remove("detections.txt")
     # Define necessary components
     grid = anchor_grid(GRID_X, GRID_Y, GRID_SCALE, GRID_SIZES, GRID_RATIOS)
-    net = tf.keras.models.load_model(r'models/mobilenet')
+    net = tf.keras.models.load_model(r'models/ssd')
     evaluate_net(net, grid, "dataset_mmp/val/")
 
 

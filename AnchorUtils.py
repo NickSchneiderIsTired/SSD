@@ -73,10 +73,10 @@ def anchor_grid(fmap_rows,
             for scale_count, scale in enumerate(scales):
                 half_scale = scale // 2
                 for ratio_count, ratio in enumerate(aspect_ratios):
-                    y1 = scaled_row - half_scale * ratio
-                    x1 = scaled_col - half_scale
-                    y2 = scaled_row + half_scale * ratio
-                    x2 = scaled_col + half_scale
+                    y1 = max(scaled_row - half_scale * ratio, 0)
+                    x1 = max(scaled_col - half_scale, 0)
+                    y2 = min(scaled_row + half_scale * ratio, 320)
+                    x2 = min(scaled_col + half_scale, 320)
                     res[row, col, scale_count, ratio_count] = np.array([x1, y1, x2, y2])
 
     return res

@@ -4,6 +4,7 @@ from AnchorUtils import anchor_grid
 from DatasetMMP import MMP_Dataset
 import numpy as np
 from constants import *
+from test import main as eval
 
 
 physical_devices = tf.config.list_physical_devices('GPU')
@@ -62,7 +63,8 @@ def main():
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
             print(mean_loss.numpy(), counter)
         if counter == 2000:
-            net.save('./models/mobilenet')
+            net.save('./models/ssd')
+            eval()
             return
 
         grads = tape.gradient(mean_loss, net.trainable_weights)
