@@ -18,8 +18,8 @@ def augment(img, boxes, scores, modifier):
         img, boxes, scores = rotate(img, boxes, scores)
     if modifier % 18 == 0:
         img = noise(img)
-    if modifier % 13 == 0:
-        img, boxes, scores = crop(img, boxes, scores)
+    #if modifier % 13 == 0:
+        #img, boxes, scores = crop(img, boxes, scores)
 
     return img, boxes, scores
 

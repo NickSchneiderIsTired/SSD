@@ -60,7 +60,7 @@ def main():
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
             print(mean_loss.numpy(), counter)
-        if counter == 500:
+        if counter == 2000:
             net.save('./models/mobilenet')
             return
 

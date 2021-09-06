@@ -5,7 +5,7 @@ from DatasetMMP import MMP_Dataset_Evaluation
 
 
 def call_eval_script():
-    os.system('python eval_detections.py --detection detections.txt --dset_basedir ./dataset_mmp/val/')
+    os.system('python eval_detections.py --detection detections.txt --dset_basedir dataset_mmp')
 
 
 def write_detections(filename, boxes, scores):
@@ -50,6 +50,7 @@ def evaluate_net(net, grid, dataset_path):
             write_detections(filename, selected_boxes.numpy(), selected_scores.numpy())
 
     print("Evaluation completed")
+    call_eval_script()
 
 
 def list_filenames_gen(path):
