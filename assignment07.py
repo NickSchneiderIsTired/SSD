@@ -24,7 +24,7 @@ def main():
     opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
     # Add another layer
     last_layer = net.layers[-1]
-    new_layer = tf.keras.layers.Conv2D(filters=24,  # 24
+    new_layer = tf.keras.layers.Conv2D(filters=len(GRID_SIZES) * len(GRID_RATIOS) * 2,
                                        kernel_size=(1, 1),
                                        padding="same",
                                        kernel_regularizer=tf.keras.regularizers.L2(l2=0.0005),
@@ -61,7 +61,7 @@ def main():
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
             print(mean_loss.numpy(), counter)
-        if counter == 100:
+        if counter == 2000:
             net.save('./models/mobilenet')
             return
 

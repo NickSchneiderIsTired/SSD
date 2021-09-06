@@ -24,15 +24,14 @@ def augment(img, boxes, scores, modifier):
 
 
 def flip(img, boxes, scores):
-    horizontally = random.random() > 0.2
     len_sizes = len(GRID_SIZES)
     len_ratios = len(GRID_RATIOS)
     reshaped_boxes = tf.reshape(boxes, (GRID_X, GRID_Y, len_sizes * len_ratios))
     reshaped_scores = tf.reshape(scores, (GRID_X, GRID_Y, len_sizes * len_ratios))
 
-    img = tf.image.flip_left_right(img) if horizontally else tf.image.flip_up_down(img)
-    reshaped_boxes = tf.image.flip_left_right(reshaped_boxes) if horizontally else tf.image.flip_up_down(reshaped_boxes)
-    reshaped_scores = tf.image.flip_left_right(reshaped_scores) if horizontally else tf.image.flip_up_down(reshaped_scores)
+    img = tf.image.flip_left_right(img)
+    reshaped_boxes = tf.image.flip_left_right(reshaped_boxes)
+    reshaped_scores = tf.image.flip_left_right(reshaped_scores)
     return (img,
             tf.cast(tf.reshape(reshaped_boxes, (GRID_X, GRID_Y, len_sizes, len_ratios)), tf.int32),
             tf.reshape(reshaped_scores, (GRID_X, GRID_Y, len_sizes, len_ratios)))
