@@ -2,6 +2,7 @@ import tensorflow as tf
 from AnchorUtils import anchor_grid
 from Evaluation import evaluate_net
 import os
+from constants import *
 
 
 def main():
@@ -11,7 +12,7 @@ def main():
     if os.path.exists("detections.txt"):
         os.remove("detections.txt")
     # Define necessary components
-    grid = anchor_grid(10, 10, 32.0, [70, 100, 140, 200], [0.5, 1.0, 2.0])
+    grid = anchor_grid(GRID_X, GRID_Y, GRID_SCALE, GRID_SIZES, GRID_RATIOS)
     net = tf.keras.models.load_model(r'models/mobilenet')
     evaluate_net(net, grid, "dataset_mmp/val/")
 

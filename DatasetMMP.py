@@ -33,23 +33,23 @@ def normalize(array):
 
 
 class MMP_Dataset:
-    def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid, threshhold):
+    def __init__(self, path_to_data, batch_size, num_parallel_calls, anchor_grid, threshold):
         self.path_to_data = path_to_data
         self.batch_size = batch_size
         self.num_parallel_calls = num_parallel_calls
         self.files = create_dict(path_to_data)
         self.anchor_grid = anchor_grid
-        self.threshhold = threshhold
+        self.threshold = threshold
 
     def data_gen(self):
         for filename, annotationRects in self.files.items():
             modifier = random.randint(1, 100)
             scores = anchor_max_gt_overlaps(self.anchor_grid, np.array([np.array(rect) for rect in annotationRects]))
-            yield filename, create_label_grid(scores, self.threshhold), scores, modifier
+            yield filename, create_label_grid(scores, self.threshold), scores, modifier
 
     def __call__(self):
         dataset = tf.data.Dataset.from_generator(self.data_gen, output_types=(tf.string, tf.int32, tf.float32, tf.int32))
-        dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
+        # dataset = dataset.shuffle(buffer_size=len(self.files.keys()))
         dataset = dataset.repeat()
         dataset = dataset.map(self.load_single_example, num_parallel_calls=self.num_parallel_calls)
         dataset = dataset.batch(self.batch_size)
