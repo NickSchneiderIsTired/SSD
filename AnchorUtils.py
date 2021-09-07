@@ -22,6 +22,23 @@ def create_negative_samples(label_grids, output_shape, negative_ratio):
     return tf.clip_by_value(negative_samples, clip_value_min=-1000000, clip_value_max=1)
 
 
+def hard_negative_samples(loss, label_grids, output_shape, negative_ratio):
+    positive_values_count = tf.math.reduce_sum(label_grids)
+
+    negative_samples = tf.reshape(loss, np.prod(list(output_shape)))
+    negative_samples = tf.sort(negative_samples)
+    negative_sample_count = positive_values_count * negative_ratio
+
+    top_k = tf.math.top_k(negative_samples, k=negative_sample_count.numpy())
+    negative_samples = negative_samples > top_k.values[-1].numpy()
+    negative_samples = tf.cast(negative_samples, tf.float32)
+
+    negative_samples = tf.reshape(negative_samples, output_shape)
+    negative_samples = tf.add(negative_samples, tf.cast(label_grids, tf.float32))
+
+    return tf.clip_by_value(negative_samples, clip_value_min=-1000000, clip_value_max=1)
+
+
 def norm_img(img):
     img -= np.min(img)
     img /= np.max(img)
