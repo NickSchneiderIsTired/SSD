@@ -52,7 +52,7 @@ def main():
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
             # print(mean_loss.numpy(), counter)
         if counter % 200 == 0:
-            net.save('./models/test')
+            net.save('./models/test')  # @Lehrstuhl: Handed in detections.txt was created via ./models/topScore
             eval(net, "dataset_mmp/val/")
 
         grads = tape.gradient(mean_loss, net.trainable_weights)

@@ -5,7 +5,7 @@ import os
 from constants import *
 
 
-def main(net=None, dataset_path="dataset_mmp/val/"):
+def main(net=None, dataset_path="dataset_mmp/test/"):
     physical_devices = tf.config.list_physical_devices('GPU')
     if len(physical_devices) > 0:
         tf.config.experimental.set_memory_growth(physical_devices[0], True)
@@ -14,7 +14,7 @@ def main(net=None, dataset_path="dataset_mmp/val/"):
     # Define necessary components
     grid = anchor_grid(GRID_X, GRID_Y, GRID_SCALE, GRID_SIZES, GRID_RATIOS)
     if net is None:
-        net = tf.keras.models.load_model(r'models/test')
+        net = tf.keras.models.load_model(r'models/topScore')
     evaluate_net(net, grid, dataset_path)
 
 
