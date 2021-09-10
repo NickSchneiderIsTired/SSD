@@ -1,3 +1,4 @@
+import numpy as np
 from tensorflow.keras.applications import MobileNetV2
 import tensorflow as tf
 from AnchorUtils import anchor_grid, hard_negative_samples
@@ -21,7 +22,12 @@ def main():
                           anchor_grid=grid,
                           threshold=0.5)
     net = MobileNetV2(input_shape=(320, 320, 3), weights="imagenet", include_top=False)
-    opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate=0.0001,
+        decay_steps=1000,
+        decay_rate=0.7,
+        staircase=True)
+    opt = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
     # Add another layer
     last_layer = net.layers[-1]
     new_layer = tf.keras.layers.Conv2D(filters=len(GRID_SIZES) * len(GRID_RATIOS) * 2,
@@ -44,11 +50,10 @@ def main():
             negative_samples = hard_negative_samples(loss, label_grids, output_shape, negative_ratio)
             loss = tf.math.multiply(loss, negative_samples)
             mean_loss = tf.math.reduce_sum(loss) / tf.math.reduce_sum(negative_samples)
-            print(mean_loss.numpy(), counter)
-        if counter == 500:
+            # print(mean_loss.numpy(), counter)
+        if counter % 200 == 0:
             net.save('./models/test')
-            eval()
-            return
+            eval(net, "dataset_mmp/val/")
 
         grads = tape.gradient(mean_loss, net.trainable_weights)
         opt.apply_gradients(zip(grads, net.trainable_weights))

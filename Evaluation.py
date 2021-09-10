@@ -34,7 +34,6 @@ def evaluate_net(net, grid, dataset_path, nms_threshold=0.3):
     flatted_grid = tf.reshape(grid, (GRID_X * GRID_Y * len(GRID_SIZES) * len(GRID_RATIOS), 4))
     flatted_scores_shape = GRID_X * GRID_Y * len(GRID_SIZES) * len(GRID_RATIOS)
 
-    print("Starting evaluation")
     for (filenames, imgs) in dataset():
         net_output = net(imgs, training=False)
         net_output = tf.reshape(net_output, (filenames.shape[0], GRID_X, GRID_Y, len(GRID_SIZES), len(GRID_RATIOS), 2))
@@ -51,7 +50,6 @@ def evaluate_net(net, grid, dataset_path, nms_threshold=0.3):
 
             write_detections(filename, selected_boxes.numpy(), selected_scores.numpy())
 
-    print("Evaluation completed")
     call_eval_script()
 
 

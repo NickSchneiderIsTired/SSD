@@ -11,14 +11,14 @@ Each mini-batch in the pipeline will access these functions to simulate a larger
 
 
 def augment(img, boxes, scores, modifier):
-    if modifier % 5 == 0:
+    if modifier % 2 == 0:
         img, boxes, scores = flip(img, boxes, scores)
-    if modifier % 7 == 0:
+    if modifier % 5 == 0:
         img, boxes, scores = rotate(img, boxes, scores)
-    if modifier % 18 == 0:
-        img = noise(img)
-    #if modifier % 13 == 0:
-        #img, boxes, scores = crop(img, boxes, scores)
+    #if modifier % 18 == 0:
+        #img = noise(img)
+    if modifier % 13 == 0:
+        img, boxes, scores = crop(img, boxes, scores)
 
     return img, boxes, scores
 
